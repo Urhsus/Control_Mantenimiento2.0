@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12 mb-4">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="card-title">Bienvenido al Sistema de Control de Mantenimiento ROV</h2>
+                <p class="card-text">
+                    Este sistema te permite gestionar y dar seguimiento a las reparaciones de equipos ROV.
+                    Selecciona una opción del menú para comenzar.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h4>Acciones Rápidas</h4>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-3">
+                    <a href="{{ url_for('repairs.new_repair') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Nueva Reparación
+                    </a>
+                    <a href="{{ url_for('repairs.repairs_list') }}" class="btn btn-info">
+                        <i class="fas fa-list"></i> Ver Reparaciones
+                    </a>
+                    {% if current_user.role == 'supervisor' %}
+                    <a href="{{ url_for('repairs.reports') }}" class="btn btn-success">
+                        <i class="fas fa-chart-bar"></i> Ver Informes
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h4>Información del Usuario</h4>
+            </div>
+            <div class="card-body">
+                <p><strong>Usuario:</strong> {{ current_user.username }}</p>
+                <p><strong>Rol:</strong> {{ current_user.role|title }}</p>
+                <p><strong>Email:</strong> {{ current_user.email }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

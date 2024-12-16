@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header">
+        <h3>Nueva Reparación</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST" id="repairForm">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="rov" class="form-label">ROV</label>
+                        <select class="form-select" id="rov" name="rov_id" required>
+                            <option value="">Seleccionar ROV</option>
+                            {% for rov in rovs %}
+                            <option value="{{ rov.id }}">{{ rov.code }} - {{ rov.equipment }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="pilot_name" class="form-label">Nombre del Piloto</label>
+                        <input type="text" class="form-control" id="pilot_name" name="pilot_name" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="repair_type" class="form-label">Tipo de Reparación</label>
+                        <select class="form-select" id="repair_type" name="repair_type" required>
+                            <option value="preventiva">Preventiva</option>
+                            <option value="correctiva">Correctiva</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="reported_failure" class="form-label">Falla Reportada</label>
+                        <textarea class="form-control" id="reported_failure" name="reported_failure" rows="3" required></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="observations" class="form-label">Observaciones</label>
+                        <textarea class="form-control" id="observations" name="observations" rows="3"></textarea>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5>Repuestos Utilizados</h5>
+                </div>
+                <div class="card-body">
+                    <div id="parts-container">
+                        <div class="row part-entry mb-2">
+                            <div class="col-md-6">
+                                <select class="form-select part-select" name="parts[]" required>
+                                    <option value="">Seleccionar Repuesto</option>
+                                    {% for part in parts %}
+                                    <option value="{{ part.id }}" data-cost="{{ part.unit_cost }}">
+                                        {{ part.code }} - {{ part.name }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="number" class="form-control quantity-input" name="quantities[]" 
+                                       placeholder="Cantidad" min="1" required>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="button" class="btn btn-danger remove-part">Eliminar</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-secondary mt-2" id="add-part">
+                        Agregar Repuesto
+                    </button>
+                </div>
+            </div>
+
+            <div class="row mt-3">
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="start_date" class="form-label">Fecha de Inicio</label>
+                        <input type="datetime-local" class="form-control" id="start_date" name="start_date" required>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="mb-3">
+                        <label for="end_date" class="form-label">Fecha de Finalización</label>
+                        <input type="datetime-local" class="form-control" id="end_date" name="end_date">
+                    </div>
+                </div>
+            </div>
+
+            <div class="text-end mt-3">
+                <button type="submit" class="btn btn-primary">Guardar Reparación</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const container = document.getElementById('parts-container');
+    const addButton = document.getElementById('add-part');
+
+    addButton.addEventListener('click', function() {
+        const newEntry = container.children[0].cloneNode(true);
+        newEntry.querySelectorAll('input, select').forEach(input => {
+            input.value = '';
+        });
+        container.appendChild(newEntry);
+    });
+
+    container.addEventListener('click', function(e) {
+        if (e.target.classList.contains('remove-part')) {
+            if (container.children.length > 1) {
+                e.target.closest('.part-entry').remove();
+            }
+        }
+    });
+});
+</script>
+{% endblock %}

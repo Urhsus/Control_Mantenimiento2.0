@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3>Listado de Reparaciones</h3>
+        <div>
+            <a href="{{ url_for('repairs.new_repair') }}" class="btn btn-primary">Nueva Reparación</a>
+            <button class="btn btn-success" id="exportExcel">Exportar a Excel</button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label for="dateFilter" class="form-label">Filtrar por Fecha</label>
+                <input type="date" class="form-control" id="dateFilter">
+            </div>
+            <div class="col-md-4">
+                <label for="typeFilter" class="form-label">Tipo de Reparación</label>
+                <select class="form-select" id="typeFilter">
+                    <option value="">Todos</option>
+                    <option value="preventiva">Preventiva</option>
+                    <option value="correctiva">Correctiva</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Código ROV</th>
+                        <th>Tipo</th>
+                        <th>Piloto</th>
+                        <th>Fecha Inicio</th>
+                        <th>Estado</th>
+                        <th>Técnico</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for repair in repairs %}
+                    <tr>
+                        <td>{{ repair.rov.code }}</td>
+                        <td>{{ repair.repair_type|title }}</td>
+                        <td>{{ repair.pilot_name }}</td>
+                        <td>{{ repair.start_date.strftime('%d/%m/%Y %H:%M') }}</td>
+                        <td>
+                            <span class="badge {% if repair.status == 'en_proceso' %}bg-warning
+                                           {% elif repair.status == 'completado' %}bg-success
+                                           {% else %}bg-secondary{% endif %}">
+                                {{ repair.status|title }}
+                            </span>
+                        </td>
+                        <td>{{ repair.technician.username }}</td>
+                        <td>
+                            <a href="{{ url_for('repairs.repair_detail', repair_id=repair.id) }}" 
+                               class="btn btn-sm btn-info">Ver Detalles</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const dateFilter = document.getElementById('dateFilter');
+    const typeFilter = document.getElementById('typeFilter');
+    const exportBtn = document.getElementById('exportExcel');
+
+    function applyFilters() {
+        const date = dateFilter.value;
+        const type = typeFilter.value;
+        window.location.href = `{{ url_for('repairs.repairs_list') }}?date=${date}&type=${type}`;
+    }
+
+    dateFilter.addEventListener('change', applyFilters);
+    typeFilter.addEventListener('change', applyFilters);
+
+    exportBtn.addEventListener('click', function() {
+        const date = dateFilter.value;
+        const type = typeFilter.value;
+        window.location.href = `{{ url_for('repairs.export_excel') }}?date=${date}&type=${type}`;
+    });
+});
+</script>
+{% endblock %}

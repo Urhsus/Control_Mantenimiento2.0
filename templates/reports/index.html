@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row">
+    <!-- Reporte de Frecuencia de Fallas -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h4>Reporte de Frecuencia de Fallas</h4>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('repairs.failure_frequency_report') }}" method="GET">
+                    <div class="mb-3">
+                        <label for="start_date" class="form-label">Fecha Inicio</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="end_date" class="form-label">Fecha Fin</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Generar Reporte</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reporte de Costos Mensuales -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h4>Reporte de Costos Mensuales</h4>
+            </div>
+            <div class="card-body">
+                <form action="{{ url_for('repairs.monthly_cost_report') }}" method="GET">
+                    <div class="mb-3">
+                        <label for="year" class="form-label">Año</label>
+                        <select class="form-select" id="year" name="year" required>
+                            {% for year in range(2023, current_year + 1) %}
+                            <option value="{{ year }}">{{ year }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="month" class="form-label">Mes</label>
+                        <select class="form-select" id="month" name="month" required>
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Generar Reporte</button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resumen General -->
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h4>Resumen General</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-primary text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Total Reparaciones</h5>
+                                <h2 class="mb-0">{{ stats.total_repairs }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-success text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Preventivas</h5>
+                                <h2 class="mb-0">{{ stats.preventive }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-warning text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Correctivas</h5>
+                                <h2 class="mb-0">{{ stats.corrective }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card bg-info text-white">
+                            <div class="card-body">
+                                <h5 class="card-title">Costo Total</h5>
+                                <h2 class="mb-0">${{ stats.total_cost|round(2) }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
