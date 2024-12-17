@@ -1,0 +1,11 @@
+codigo,nombre,descripcion,costo_unitario
+ROV-001,Motor Principal,Motor eléctrico principal para ROV,1500.00
+ROV-002,Hélice de Propulsión,Hélice de propulsión principal de titanio,350.50
+ROV-003,Cable Umbilical,Cable umbilical de 100m con conectores,2500.00
+ROV-004,Sensor de Profundidad,Sensor de presión para medición de profundidad,450.75
+ROV-005,Cámara HD,Cámara submarina de alta definición,1200.00
+ROV-006,Luz LED,Luz LED submarina de alta potencia,180.25
+ROV-007,Batería Recargable,Batería de litio recargable 24V,750.00
+ROV-008,Controlador ESC,Controlador electrónico de velocidad,220.50
+ROV-009,Carcasa Estanca,Carcasa estanca de aluminio marino,890.00
+ROV-010,Kit de Sellos,Kit completo de sellos y O-rings,95.75

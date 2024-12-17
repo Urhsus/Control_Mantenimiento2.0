@@ -5,7 +5,14 @@
     <div class="card-header d-flex justify-content-between align-items-center">
         <h3>Lista de Repuestos</h3>
         {% if current_user.is_supervisor() %}
-        <a href="{{ url_for('parts.new_part') }}" class="btn btn-primary">Nuevo Repuesto</a>
+        <div>
+            <a href="{{ url_for('parts.import_parts') }}" class="btn btn-success me-2">
+                <i class="fas fa-file-excel"></i> Importar Excel
+            </a>
+            <a href="{{ url_for('parts.new_part') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Nuevo Repuesto
+            </a>
+        </div>
         {% endif %}
     </div>
     <div class="card-body">
@@ -31,9 +38,13 @@
                         <td>${{ "%.2f"|format(part.unit_cost) }}</td>
                         {% if current_user.is_supervisor() %}
                         <td>
-                            <a href="{{ url_for('parts.edit_part', part_id=part.id) }}" class="btn btn-sm btn-primary">Editar</a>
-                            <form action="{{ url_for('parts.delete_part', part_id=part.id) }}" method="POST" class="d-inline">
-                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de eliminar este repuesto?')">Eliminar</button>
+                            <a href="{{ url_for('parts.edit_part', id=part.id) }}" class="btn btn-sm btn-primary">
+                                <i class="fas fa-edit"></i> Editar
+                            </a>
+                            <form action="{{ url_for('parts.delete_part', id=part.id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de eliminar este repuesto?')">
+                                    <i class="fas fa-trash"></i> Eliminar
+                                </button>
                             </form>
                         </td>
                         {% endif %}

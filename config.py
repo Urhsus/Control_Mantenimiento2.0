@@ -7,19 +7,20 @@ load_dotenv()
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev'
     
-    # URI para PostgreSQL
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///control_mantenimiento.db')
+    # Configurar la base de datos
+    basedir = os.path.abspath(os.path.dirname(__file__))
     
-    # Asegurarse de que la URL de PostgreSQL tenga el prefijo correcto
-    if SQLALCHEMY_DATABASE_URI.startswith("postgres://"):
-        SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace("postgres://", "postgresql://", 1)
+    # Usar una ruta simple y directa para SQLite
+    DB_PATH = os.path.join(basedir, 'mantenimiento.db')
+    SQLALCHEMY_DATABASE_URI = f'sqlite:///{DB_PATH}'
     
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     
-    # Configuración del servidor de correo
-    MAIL_SERVER = os.environ.get('MAIL_SERVER', 'smtp.gmail.com')
-    MAIL_PORT = int(os.environ.get('MAIL_PORT', '587'))
-    MAIL_USE_TLS = os.environ.get('MAIL_USE_TLS', 'true').lower() in ['true', 'on', '1']
-    MAIL_USERNAME = os.environ.get('MAIL_USERNAME')
-    MAIL_PASSWORD = os.environ.get('MAIL_PASSWORD')
-    MAIL_DEFAULT_SENDER = os.environ.get('MAIL_DEFAULT_SENDER')
+    # Simplificar las opciones del motor
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        'pool_recycle': 280
+    }
+    
+    # Configuración adicional
+    UPLOAD_FOLDER = os.path.join(basedir, 'uploads')
+    MAX_CONTENT_LENGTH = 16 * 1024 * 1024  # 16MB max file size

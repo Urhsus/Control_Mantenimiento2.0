@@ -1,33 +1,39 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="card">
-    <div class="card-header">
-        <h3>Nuevo Repuesto</h3>
-    </div>
-    <div class="card-body">
-        <form method="POST">
-            <div class="mb-3">
-                <label for="code" class="form-label">Código</label>
-                <input type="text" class="form-control" id="code" name="code" required>
-            </div>
-            <div class="mb-3">
-                <label for="name" class="form-label">Nombre</label>
-                <input type="text" class="form-control" id="name" name="name" required>
-            </div>
-            <div class="mb-3">
-                <label for="description" class="form-label">Descripción</label>
-                <textarea class="form-control" id="description" name="description" rows="3"></textarea>
-            </div>
-            <div class="mb-3">
-                <label for="unit_cost" class="form-label">Costo Unitario</label>
-                <input type="number" step="0.01" class="form-control" id="unit_cost" name="unit_cost" required>
-            </div>
-            <div class="text-end">
-                <a href="{{ url_for('parts.parts_list') }}" class="btn btn-secondary">Cancelar</a>
-                <button type="submit" class="btn btn-primary">Guardar</button>
-            </div>
-        </form>
+<div class="container mt-4">
+    <div class="card">
+        <div class="card-header">
+            <h3 class="mb-0">Nuevo Repuesto</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="mb-3">
+                    <label for="code" class="form-label">Código</label>
+                    <input type="text" class="form-control" id="code" name="code" required 
+                           value="{{ request.form.code or '' }}" maxlength="50">
+                </div>
+                <div class="mb-3">
+                    <label for="name" class="form-label">Nombre</label>
+                    <input type="text" class="form-control" id="name" name="name" required 
+                           value="{{ request.form.name or '' }}" maxlength="100">
+                </div>
+                <div class="mb-3">
+                    <label for="description" class="form-label">Descripción</label>
+                    <textarea class="form-control" id="description" name="description" rows="3" 
+                              maxlength="500">{{ request.form.description or '' }}</textarea>
+                </div>
+                <div class="mb-3">
+                    <label for="unit_cost" class="form-label">Costo Unitario</label>
+                    <input type="number" step="0.01" min="0" class="form-control" id="unit_cost" 
+                           name="unit_cost" required value="{{ request.form.unit_cost or '' }}">
+                </div>
+                <div class="text-end">
+                    <a href="{{ url_for('parts.list_parts') }}" class="btn btn-secondary">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Guardar</button>
+                </div>
+            </form>
+        </div>
     </div>
 </div>
 {% endblock %}

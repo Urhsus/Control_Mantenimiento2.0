@@ -11,15 +11,7 @@
                 <div class="col-md-6">
                     <div class="mb-3">
                         <label for="rov_code" class="form-label">Código ROV</label>
-                        <div class="input-group">
-                            <input type="text" class="form-control" id="rov_code" name="rov_code" required>
-                            <select class="form-select" id="rov_select" style="max-width: 60%;">
-                                <option value="">O seleccionar existente...</option>
-                                {% for rov in rovs %}
-                                <option value="{{ rov.id }}" data-code="{{ rov.code }}" data-control="{{ rov.control_code }}">{{ rov.code }} - {{ rov.equipment }}</option>
-                                {% endfor %}
-                            </select>
-                        </div>
+                        <input type="text" class="form-control" id="rov_code" name="rov_code" required>
                     </div>
                     <div class="mb-3">
                         <label for="controller_code" class="form-label">Código del Controlador</label>
@@ -91,23 +83,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('parts-container');
     const addButton = document.getElementById('add-part');
-    const rovSelect = document.getElementById('rov_select');
-    const rovCodeInput = document.getElementById('rov_code');
-    const controllerInput = document.getElementById('controller_code');
-
-    // Cuando se selecciona un ROV existente
-    rovSelect.addEventListener('change', function() {
-        const selectedOption = rovSelect.options[rovSelect.selectedIndex];
-        if (selectedOption.value) {
-            rovCodeInput.value = selectedOption.dataset.code;
-            controllerInput.value = selectedOption.dataset.control;
-        }
-    });
-
-    // Cuando se ingresa un código manualmente, limpiar la selección
-    rovCodeInput.addEventListener('input', function() {
-        rovSelect.value = '';
-    });
 
     // Función para calcular el costo total
     function updateCost(row) {
