@@ -59,12 +59,13 @@ def create_app(config_class=Config):
 
     return app
 
+# Crear la instancia de la aplicación para Gunicorn
+app = create_app()
+
+# Crear directorio de uploads
+if not os.path.exists(app.config['UPLOAD_FOLDER']):
+    os.makedirs(app.config['UPLOAD_FOLDER'])
+
 if __name__ == '__main__':
-    app = create_app()
-    
-    # Crear directorio de uploads si no existe
-    if not os.path.exists(app.config['UPLOAD_FOLDER']):
-        os.makedirs(app.config['UPLOAD_FOLDER'])
-    
     port = int(os.environ.get('PORT', 10000))
     app.run(host='0.0.0.0', port=port, debug=True)
