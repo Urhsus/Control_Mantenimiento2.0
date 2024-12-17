@@ -1,7 +1,10 @@
-from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app
+from flask import Blueprint, render_template, request, redirect, url_for, flash, current_app, send_file
 from flask_login import login_required, current_user
 from models import db, Part
 import logging
+import pandas as pd
+from werkzeug.utils import secure_filename
+import os
 
 # Configurar logging
 logging.basicConfig(level=logging.DEBUG)
@@ -139,3 +142,100 @@ def delete_part(id):
     
     flash('Repuesto eliminado exitosamente', 'success')
     return redirect(url_for('parts.list_parts'))
+
+@parts_bp.route('/template')
+@login_required
+def download_template():
+    if not current_user.is_supervisor():
+        flash('No tienes permiso para descargar la plantilla', 'error')
+        return redirect(url_for('parts.list_parts'))
+    
+    try:
+        # Crear un DataFrame de ejemplo
+        df = pd.DataFrame({
+            'code': ['ROV001', 'ROV002', 'ROV003'],
+            'name': ['Motor DC', 'Sensor Temp', 'Cable USB'],
+            'description': ['Motor 12V para ROV', 'Sensor de temperatura', 'Cable USB tipo C'],
+            'unit_cost': [150.00, 75.50, 25.00]
+        })
+        
+        # Guardar el DataFrame como Excel
+        template_path = os.path.join(current_app.config['UPLOAD_FOLDER'], 'template_repuestos.xlsx')
+        df.to_excel(template_path, index=False)
+        
+        return send_file(template_path, as_attachment=True, download_name='plantilla_repuestos.xlsx')
+    except Exception as e:
+        current_app.logger.error(f'Error al crear plantilla: {str(e)}')
+        flash('Error al generar la plantilla', 'error')
+        return redirect(url_for('parts.list_parts'))
+
+@parts_bp.route('/import', methods=['GET', 'POST'])
+@login_required
+def import_parts():
+    if not current_user.is_supervisor():
+        flash('No tienes permiso para importar repuestos', 'error')
+        return redirect(url_for('parts.list_parts'))
+        
+    if request.method == 'POST':
+        if 'file' not in request.files:
+            flash('No se seleccionó ningún archivo', 'error')
+            return redirect(request.url)
+            
+        file = request.files['file']
+        if file.filename == '':
+            flash('No se seleccionó ningún archivo', 'error')
+            return redirect(request.url)
+            
+        if not file.filename.endswith('.xlsx'):
+            flash('El archivo debe ser un Excel (.xlsx)', 'error')
+            return redirect(request.url)
+            
+        try:
+            # Leer el archivo Excel
+            df = pd.read_excel(file)
+            
+            # Verificar las columnas requeridas
+            required_columns = ['code', 'name', 'unit_cost']
+            missing_columns = [col for col in required_columns if col not in df.columns]
+            if missing_columns:
+                flash(f'Faltan las siguientes columnas: {", ".join(missing_columns)}', 'error')
+                return redirect(request.url)
+            
+            success_count = 0
+            error_count = 0
+            
+            # Procesar cada fila
+            for index, row in df.iterrows():
+                try:
+                    # Verificar si el código ya existe
+                    existing_part = Part.query.filter_by(code=str(row['code']).strip()).first()
+                    if existing_part:
+                        current_app.logger.warning(f"Código duplicado: {row['code']}")
+                        error_count += 1
+                        continue
+                    
+                    # Crear nuevo repuesto
+                    part = Part(
+                        code=str(row['code']).strip(),
+                        name=str(row['name']).strip(),
+                        description=str(row.get('description', '')).strip() if 'description' in row else None,
+                        unit_cost=float(row['unit_cost'])
+                    )
+                    db.session.add(part)
+                    success_count += 1
+                    
+                except Exception as e:
+                    current_app.logger.error(f"Error en la fila {index + 2}: {str(e)}")
+                    error_count += 1
+                    continue
+            
+            db.session.commit()
+            flash(f'Importación completada. {success_count} repuestos importados exitosamente. {error_count} errores.', 'success')
+            return redirect(url_for('parts.list_parts'))
+            
+        except Exception as e:
+            current_app.logger.error(f"Error al procesar el archivo: {str(e)}")
+            flash('Error al procesar el archivo. Verifica el formato.', 'error')
+            return redirect(request.url)
+    
+    return render_template('parts/import.html')
