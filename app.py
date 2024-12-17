@@ -15,8 +15,17 @@ def create_app(config_class=Config):
     app = Flask(__name__)
     app.config.from_object(config_class)
 
-    # Configurar logging básico
-    logging.basicConfig(level=logging.INFO)
+    # Configurar logging más detallado
+    logging.basicConfig(
+        level=logging.DEBUG,
+        format='%(asctime)s %(levelname)s: %(message)s [in %(pathname)s:%(lineno)d]'
+    )
+    
+    # Asegurar que el directorio de la base de datos existe
+    db_dir = os.path.dirname(app.config['SQLALCHEMY_DATABASE_URI'].replace('sqlite:///', ''))
+    if not os.path.exists(db_dir):
+        os.makedirs(db_dir)
+        app.logger.info(f'Directorio de base de datos creado: {db_dir}')
     
     # Inicializar extensiones
     db.init_app(app)
@@ -51,10 +60,26 @@ def create_app(config_class=Config):
     # Inicializar la base de datos
     with app.app_context():
         try:
+            app.logger.info('Intentando crear las tablas de la base de datos...')
             db.create_all()
             app.logger.info('Base de datos inicializada correctamente')
+            
+            # Verificar si hay un usuario admin
+            admin = User.query.filter_by(role='admin').first()
+            if not admin:
+                app.logger.info('Creando usuario admin por defecto...')
+                admin = User(
+                    username='admin',
+                    email='admin@example.com',
+                    role='admin'
+                )
+                admin.set_password('admin123')
+                db.session.add(admin)
+                db.session.commit()
+                app.logger.info('Usuario admin creado exitosamente')
         except Exception as e:
             app.logger.error(f'Error al inicializar la base de datos: {str(e)}')
+            app.logger.error('Detalles del error:', exc_info=True)
             raise
 
     return app
@@ -62,9 +87,11 @@ def create_app(config_class=Config):
 # Crear la instancia de la aplicación para Gunicorn
 app = create_app()
 
-# Crear directorio de uploads
-if not os.path.exists(app.config['UPLOAD_FOLDER']):
-    os.makedirs(app.config['UPLOAD_FOLDER'])
+# Crear directorios necesarios
+for directory in [app.config['UPLOAD_FOLDER']]:
+    if not os.path.exists(directory):
+        os.makedirs(directory)
+        app.logger.info(f'Directorio creado: {directory}')
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 10000))
