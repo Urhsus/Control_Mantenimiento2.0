@@ -94,7 +94,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     function updateCost(row) {
         const select = row.querySelector('.part-select');
-        const quantity = row.querySelector('.quantity-input').value;
+        const quantity = parseInt(row.querySelector('.quantity-input').value) || 0;
         const costDisplay = row.querySelector('.cost-display');
         
         if (select.value) {
@@ -113,34 +113,15 @@ document.addEventListener('DOMContentLoaded', function() {
         let total = 0;
         document.querySelectorAll('.part-entry').forEach(row => {
             const select = row.querySelector('.part-select');
-            const quantity = row.querySelector('.quantity-input').value;
-            
             if (select.value) {
                 const option = select.options[select.selectedIndex];
                 const unitCost = parseFloat(option.dataset.cost);
+                const quantity = parseInt(row.querySelector('.quantity-input').value) || 0;
                 total += unitCost * quantity;
             }
         });
         totalCostDisplay.textContent = total.toFixed(2);
     }
-
-    // Agregar nuevo repuesto
-    addButton.addEventListener('click', function() {
-        const template = container.querySelector('.part-entry').cloneNode(true);
-        template.querySelector('.part-select').value = '';
-        template.querySelector('.quantity-input').value = '1';
-        template.querySelector('.cost-display').textContent = '';
-        
-        // Configurar eventos para la nueva fila
-        template.querySelector('.part-select').addEventListener('change', () => updateCost(template));
-        template.querySelector('.quantity-input').addEventListener('input', () => updateCost(template));
-        template.querySelector('.remove-part').addEventListener('click', () => {
-            template.remove();
-            updateTotalCost();
-        });
-        
-        container.appendChild(template);
-    });
 
     // Configurar eventos para la primera fila
     const firstRow = container.querySelector('.part-entry');
@@ -151,6 +132,23 @@ document.addEventListener('DOMContentLoaded', function() {
             firstRow.remove();
             updateTotalCost();
         }
+    });
+
+    // Agregar nuevo repuesto
+    addButton.addEventListener('click', function() {
+        const template = container.querySelector('.part-entry').cloneNode(true);
+        template.querySelector('.part-select').value = '';
+        template.querySelector('.quantity-input').value = '1';
+        template.querySelector('.cost-display').textContent = '';
+        
+        template.querySelector('.part-select').addEventListener('change', () => updateCost(template));
+        template.querySelector('.quantity-input').addEventListener('input', () => updateCost(template));
+        template.querySelector('.remove-part').addEventListener('click', () => {
+            template.remove();
+            updateTotalCost();
+        });
+        
+        container.appendChild(template);
     });
 });
 </script>

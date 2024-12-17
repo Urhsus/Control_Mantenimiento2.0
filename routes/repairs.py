@@ -17,41 +17,47 @@ def repairs_list():
 @login_required
 def new_repair():
     if request.method == 'POST':
-        repair = Repair(
-            rov_code=request.form['rov_code'],
-            pilot_name=request.form['pilot_name'],
-            repair_type=request.form['repair_type'],
-            reported_failure=request.form['reported_failure'],
-            observations=request.form.get('observations', ''),
-            controller_code=request.form['controller_code'],
-            technician_id=current_user.id,
-            status='pendiente',
-            start_date=datetime.now()
-        )
-        db.session.add(repair)
-        db.session.commit()
+        try:
+            repair = Repair(
+                rov_code=request.form['rov_code'],
+                pilot_name=request.form['pilot_name'],
+                repair_type=request.form['repair_type'],
+                reported_failure=request.form['reported_failure'],
+                observations=request.form.get('observations', ''),
+                controller_code=request.form['controller_code'],
+                technician_id=current_user.id,
+                status='pendiente',
+                start_date=datetime.now()
+            )
+            db.session.add(repair)
+            db.session.commit()
 
-        # Procesar los repuestos seleccionados
-        parts = request.form.getlist('parts[]')
-        quantities = request.form.getlist('quantities[]')
-        
-        for part_id, quantity in zip(parts, quantities):
-            if part_id and quantity and int(quantity) > 0:
-                part = Part.query.get(int(part_id))
-                if part:
-                    repair_part = RepairPart(
-                        repair_id=repair.id,
-                        part_id=part.id,
-                        quantity=int(quantity),
-                        unit_cost_at_time=part.unit_cost
-                    )
-                    db.session.add(repair_part)
-        
-        db.session.commit()
-        flash('Reparación creada exitosamente', 'success')
-        return redirect(url_for('repairs.repairs_list'))
+            # Procesar los repuestos seleccionados
+            parts = request.form.getlist('parts[]')
+            quantities = request.form.getlist('quantities[]')
+            
+            for part_id, quantity in zip(parts, quantities):
+                if part_id and quantity and int(quantity) > 0:
+                    part = Part.query.get(int(part_id))
+                    if part:
+                        repair_part = RepairPart(
+                            repair_id=repair.id,
+                            part_id=part.id,
+                            quantity=int(quantity),
+                            unit_cost_at_time=part.unit_cost
+                        )
+                        db.session.add(repair_part)
+            
+            db.session.commit()
+            flash('Reparación creada exitosamente', 'success')
+            return redirect(url_for('repairs.repairs_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al crear la reparación: {str(e)}', 'error')
+            parts = Part.query.all()
+            return render_template('repairs/new.html', parts=parts), 400
     
-    # Obtener lista de repuestos para el formulario
+    # GET request
     parts = Part.query.all()
     return render_template('repairs/new.html', parts=parts)
 
