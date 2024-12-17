@@ -1,10 +1,9 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, send_file
 from flask_login import login_required, current_user
-from models import db, Repair, ROV, Part, RepairPart
+from models import db, Repair, Part, RepairPart
 from datetime import datetime
-from utils.excel_export import create_repair_report, create_failure_frequency_report, create_monthly_cost_report
-import io
-from sqlalchemy import func
+import openpyxl
+from io import BytesIO
 
 repairs_bp = Blueprint('repairs', __name__, url_prefix='/repairs')
 
@@ -18,51 +17,101 @@ def repairs_list():
 @login_required
 def new_repair():
     if request.method == 'POST':
-        # Lógica para crear nueva reparación
-        rov_id = request.form.get('rov_id')
-        pilot_name = request.form.get('pilot_name')
-        repair_type = request.form.get('repair_type')
-        reported_failure = request.form.get('reported_failure')
-        observations = request.form.get('observations')
-        start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%dT%H:%M')
-        end_date_str = request.form.get('end_date')
-        end_date = datetime.strptime(end_date_str, '%Y-%m-%dT%H:%M') if end_date_str else None
-
         repair = Repair(
-            rov_id=rov_id,
+            rov_code=request.form['rov_code'],
+            pilot_name=request.form['pilot_name'],
+            repair_type=request.form['repair_type'],
+            reported_failure=request.form['reported_failure'],
+            observations=request.form.get('observations', ''),
+            controller_code=request.form['controller_code'],
             technician_id=current_user.id,
-            pilot_name=pilot_name,
-            repair_type=repair_type,
-            reported_failure=reported_failure,
-            observations=observations,
-            start_date=start_date,
-            end_date=end_date,
-            status='completado' if end_date else 'en_proceso'
+            status='pendiente',
+            start_date=datetime.now()
         )
         db.session.add(repair)
-        
-        # Procesar repuestos utilizados
-        parts = request.form.getlist('parts[]')
-        quantities = request.form.getlist('quantities[]')
-        
-        for part_id, quantity in zip(parts, quantities):
-            if part_id and quantity:
-                part = Part.query.get(part_id)
-                repair_part = RepairPart(
-                    repair=repair,
-                    part_id=part_id,
-                    quantity=int(quantity),
-                    unit_cost_at_time=part.unit_cost
-                )
-                db.session.add(repair_part)
-        
         db.session.commit()
-        flash('Reparación registrada exitosamente', 'success')
+        flash('Reparación creada exitosamente', 'success')
+        return redirect(url_for('repairs.repairs_list'))
+    return render_template('repairs/new.html')
+
+@repairs_bp.route('/<int:id>/edit', methods=['GET', 'POST'])
+@login_required
+def edit_repair(id):
+    repair = Repair.query.get_or_404(id)
+    if request.method == 'POST':
+        repair.rov_code = request.form['rov_code']
+        repair.pilot_name = request.form['pilot_name']
+        repair.repair_type = request.form['repair_type']
+        repair.reported_failure = request.form['reported_failure']
+        repair.observations = request.form.get('observations', '')
+        repair.controller_code = request.form['controller_code']
+        repair.status = request.form['status']
+        if request.form['status'] == 'completada':
+            repair.end_date = datetime.now()
+        db.session.commit()
+        flash('Reparación actualizada exitosamente', 'success')
+        return redirect(url_for('repairs.repairs_list'))
+    return render_template('repairs/edit.html', repair=repair)
+
+@repairs_bp.route('/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_repair(id):
+    if not current_user.is_supervisor():
+        flash('No tienes permiso para eliminar reparaciones', 'error')
+        return redirect(url_for('repairs.repairs_list'))
+    repair = Repair.query.get_or_404(id)
+    db.session.delete(repair)
+    db.session.commit()
+    flash('Reparación eliminada exitosamente', 'success')
+    return redirect(url_for('repairs.repairs_list'))
+
+@repairs_bp.route('/export-excel')
+@login_required
+def export_excel():
+    if not current_user.is_supervisor():
+        flash('No tienes permiso para exportar reparaciones', 'error')
         return redirect(url_for('repairs.repairs_list'))
 
-    rovs = ROV.query.all()
-    parts = Part.query.all()
-    return render_template('repairs/new.html', rovs=rovs, parts=parts)
+    # Crear un nuevo libro de trabajo
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Reparaciones"
+
+    # Encabezados
+    headers = [
+        'ID', 'Código ROV', 'Técnico', 'Piloto', 'Tipo', 'Falla Reportada',
+        'Observaciones', 'Fecha Inicio', 'Fecha Fin', 'Estado', 'Código Controlador'
+    ]
+    ws.append(headers)
+
+    # Datos
+    repairs = Repair.query.all()
+    for repair in repairs:
+        ws.append([
+            repair.id,
+            repair.rov_code,
+            repair.technician.username,
+            repair.pilot_name,
+            repair.repair_type,
+            repair.reported_failure,
+            repair.observations,
+            repair.start_date.strftime('%Y-%m-%d %H:%M:%S'),
+            repair.end_date.strftime('%Y-%m-%d %H:%M:%S') if repair.end_date else '',
+            repair.status,
+            repair.controller_code
+        ])
+
+    # Guardar el archivo en memoria
+    excel_file = BytesIO()
+    wb.save(excel_file)
+    excel_file.seek(0)
+
+    return send_file(
+        excel_file,
+        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        as_attachment=True,
+        download_name=f'reparaciones_{datetime.now().strftime("%Y%m%d_%H%M%S")}.xlsx'
+    )
 
 @repairs_bp.route('/<int:repair_id>')
 @login_required
@@ -70,105 +119,26 @@ def repair_detail(repair_id):
     repair = Repair.query.get_or_404(repair_id)
     return render_template('repairs/detail.html', repair=repair)
 
-@repairs_bp.route('/export')
-@login_required
-def export_excel():
-    date_str = request.args.get('date')
-    repair_type = request.args.get('type')
-    
-    query = Repair.query
-    
-    if date_str:
-        date = datetime.strptime(date_str, '%Y-%m-%d')
-        query = query.filter(func.date(Repair.start_date) == date)
-    
-    if repair_type:
-        query = query.filter(Repair.repair_type == repair_type)
-    
-    repairs = query.all()
-    
-    wb = create_repair_report(repairs)
-    
-    excel_file = io.BytesIO()
-    wb.save(excel_file)
-    excel_file.seek(0)
-    
-    return send_file(
-        excel_file,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        as_attachment=True,
-        download_name=f'reporte_reparaciones_{datetime.now().strftime("%Y%m%d")}.xlsx'
-    )
-
 @repairs_bp.route('/reports')
 @login_required
 def reports():
-    if current_user.role != 'supervisor':
-        flash('Acceso no autorizado', 'error')
-        return redirect(url_for('main.index'))
-    
-    # Obtener estadísticas generales
+    # Obtener estadísticas básicas
     total_repairs = Repair.query.count()
-    preventive = Repair.query.filter_by(repair_type='preventiva').count()
-    corrective = Repair.query.filter_by(repair_type='correctiva').count()
+    pending_repairs = Repair.query.filter_by(status='pendiente').count()
+    completed_repairs = Repair.query.filter_by(status='completada').count()
     
-    # Calcular costo total
-    total_cost = db.session.query(
-        func.sum(RepairPart.quantity * RepairPart.unit_cost_at_time)
-    ).scalar() or 0
+    # Obtener las reparaciones más recientes
+    recent_repairs = Repair.query.order_by(Repair.start_date.desc()).limit(5).all()
     
-    stats = {
-        'total_repairs': total_repairs,
-        'preventive': preventive,
-        'corrective': corrective,
-        'total_cost': total_cost
-    }
+    # Calcular el costo total de todas las reparaciones
+    total_cost = 0
+    for repair in Repair.query.all():
+        for repair_part in repair.parts:
+            total_cost += repair_part.unit_cost_at_time * repair_part.quantity
     
-    current_year = datetime.now().year
-    return render_template('reports/index.html', stats=stats, current_year=current_year)
-
-@repairs_bp.route('/reports/failure-frequency')
-@login_required
-def failure_frequency_report():
-    if current_user.role != 'supervisor':
-        flash('Acceso no autorizado', 'error')
-        return redirect(url_for('main.index'))
-    
-    start_date = datetime.strptime(request.args.get('start_date'), '%Y-%m-%d')
-    end_date = datetime.strptime(request.args.get('end_date'), '%Y-%m-%d')
-    
-    wb = create_failure_frequency_report(start_date, end_date)
-    
-    excel_file = io.BytesIO()
-    wb.save(excel_file)
-    excel_file.seek(0)
-    
-    return send_file(
-        excel_file,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        as_attachment=True,
-        download_name=f'reporte_fallas_{start_date.strftime("%Y%m%d")}_{end_date.strftime("%Y%m%d")}.xlsx'
-    )
-
-@repairs_bp.route('/reports/monthly-cost')
-@login_required
-def monthly_cost_report():
-    if current_user.role != 'supervisor':
-        flash('Acceso no autorizado', 'error')
-        return redirect(url_for('main.index'))
-    
-    year = int(request.args.get('year'))
-    month = int(request.args.get('month'))
-    
-    wb = create_monthly_cost_report(year, month)
-    
-    excel_file = io.BytesIO()
-    wb.save(excel_file)
-    excel_file.seek(0)
-    
-    return send_file(
-        excel_file,
-        mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        as_attachment=True,
-        download_name=f'reporte_costos_{year}_{month:02d}.xlsx'
-    )
+    return render_template('repairs/reports.html',
+                         total_repairs=total_repairs,
+                         pending_repairs=pending_repairs,
+                         completed_repairs=completed_repairs,
+                         recent_repairs=recent_repairs,
+                         total_cost=total_cost)

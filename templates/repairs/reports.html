@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Informes y Estadísticas</h2>
+        <a href="{{ url_for('repairs.export_excel') }}" class="btn btn-success">
+            <i class="fas fa-file-excel"></i> Exportar a Excel
+        </a>
+    </div>
+
+    <div class="row">
+        <!-- Tarjetas de estadísticas -->
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Total de Reparaciones</h5>
+                    <p class="card-text display-4">{{ total_repairs }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Reparaciones Pendientes</h5>
+                    <p class="card-text display-4">{{ pending_repairs }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Reparaciones Completadas</h5>
+                    <p class="card-text display-4">{{ completed_repairs }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Costo Total de Reparaciones</h5>
+                    <p class="card-text display-4">${{ "{:,.2f}".format(total_cost) }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6 mb-4">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Últimas Reparaciones</h5>
+                    <div class="list-group">
+                        {% for repair in recent_repairs %}
+                        <a href="{{ url_for('repairs.repair_detail', repair_id=repair.id) }}" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h6 class="mb-1">ROV: {{ repair.rov.code }}</h6>
+                                <small>{{ repair.start_date.strftime('%d/%m/%Y') }}</small>
+                            </div>
+                            <p class="mb-1">{{ repair.reported_failure }}</p>
+                            <small class="text-muted">Estado: {{ repair.status }}</small>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Agregar Font Awesome para los iconos -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+{% endblock %}

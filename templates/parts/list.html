@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h3>Lista de Repuestos</h3>
+        {% if current_user.is_supervisor() %}
+        <a href="{{ url_for('parts.new_part') }}" class="btn btn-primary">Nuevo Repuesto</a>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Descripción</th>
+                        <th>Costo Unitario</th>
+                        {% if current_user.is_supervisor() %}
+                        <th>Acciones</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for part in parts %}
+                    <tr>
+                        <td>{{ part.code }}</td>
+                        <td>{{ part.name }}</td>
+                        <td>{{ part.description }}</td>
+                        <td>${{ "%.2f"|format(part.unit_cost) }}</td>
+                        {% if current_user.is_supervisor() %}
+                        <td>
+                            <a href="{{ url_for('parts.edit_part', part_id=part.id) }}" class="btn btn-sm btn-primary">Editar</a>
+                            <form action="{{ url_for('parts.delete_part', part_id=part.id) }}" method="POST" class="d-inline">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('¿Estás seguro de eliminar este repuesto?')">Eliminar</button>
+                            </form>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

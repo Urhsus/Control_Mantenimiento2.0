@@ -10,13 +10,20 @@
             <div class="row">
                 <div class="col-md-6">
                     <div class="mb-3">
-                        <label for="rov" class="form-label">ROV</label>
-                        <select class="form-select" id="rov" name="rov_id" required>
-                            <option value="">Seleccionar ROV</option>
-                            {% for rov in rovs %}
-                            <option value="{{ rov.id }}">{{ rov.code }} - {{ rov.equipment }}</option>
-                            {% endfor %}
-                        </select>
+                        <label for="rov_code" class="form-label">Código ROV</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="rov_code" name="rov_code" required>
+                            <select class="form-select" id="rov_select" style="max-width: 60%;">
+                                <option value="">O seleccionar existente...</option>
+                                {% for rov in rovs %}
+                                <option value="{{ rov.id }}" data-code="{{ rov.code }}" data-control="{{ rov.control_code }}">{{ rov.code }} - {{ rov.equipment }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="controller_code" class="form-label">Código del Controlador</label>
+                        <input type="text" class="form-control" id="controller_code" name="controller_code" required>
                     </div>
                     <div class="mb-3">
                         <label for="pilot_name" class="form-label">Nombre del Piloto</label>
@@ -48,44 +55,28 @@
                 </div>
                 <div class="card-body">
                     <div id="parts-container">
+                        <!-- Template for parts -->
                         <div class="row part-entry mb-2">
-                            <div class="col-md-6">
+                            <div class="col-md-5">
                                 <select class="form-select part-select" name="parts[]" required>
                                     <option value="">Seleccionar Repuesto</option>
                                     {% for part in parts %}
-                                    <option value="{{ part.id }}" data-cost="{{ part.unit_cost }}">
-                                        {{ part.code }} - {{ part.name }}
-                                    </option>
+                                    <option value="{{ part.id }}" data-cost="{{ part.unit_cost }}">{{ part.code }} - {{ part.name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
-                            <div class="col-md-4">
-                                <input type="number" class="form-control quantity-input" name="quantities[]" 
-                                       placeholder="Cantidad" min="1" required>
+                            <div class="col-md-3">
+                                <input type="number" class="form-control quantity-input" name="quantities[]" placeholder="Cantidad" min="1" required>
                             </div>
-                            <div class="col-md-2">
-                                <button type="button" class="btn btn-danger remove-part">Eliminar</button>
+                            <div class="col-md-3">
+                                <input type="number" class="form-control cost-display" readonly>
+                            </div>
+                            <div class="col-md-1">
+                                <button type="button" class="btn btn-danger remove-part">×</button>
                             </div>
                         </div>
                     </div>
-                    <button type="button" class="btn btn-secondary mt-2" id="add-part">
-                        Agregar Repuesto
-                    </button>
-                </div>
-            </div>
-
-            <div class="row mt-3">
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="start_date" class="form-label">Fecha de Inicio</label>
-                        <input type="datetime-local" class="form-control" id="start_date" name="start_date" required>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="mb-3">
-                        <label for="end_date" class="form-label">Fecha de Finalización</label>
-                        <input type="datetime-local" class="form-control" id="end_date" name="end_date">
-                    </div>
+                    <button type="button" class="btn btn-secondary mt-2" id="add-part">+ Agregar Repuesto</button>
                 </div>
             </div>
 
@@ -100,21 +91,76 @@
 document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('parts-container');
     const addButton = document.getElementById('add-part');
+    const rovSelect = document.getElementById('rov_select');
+    const rovCodeInput = document.getElementById('rov_code');
+    const controllerInput = document.getElementById('controller_code');
 
-    addButton.addEventListener('click', function() {
-        const newEntry = container.children[0].cloneNode(true);
-        newEntry.querySelectorAll('input, select').forEach(input => {
-            input.value = '';
-        });
-        container.appendChild(newEntry);
+    // Cuando se selecciona un ROV existente
+    rovSelect.addEventListener('change', function() {
+        const selectedOption = rovSelect.options[rovSelect.selectedIndex];
+        if (selectedOption.value) {
+            rovCodeInput.value = selectedOption.dataset.code;
+            controllerInput.value = selectedOption.dataset.control;
+        }
     });
 
-    container.addEventListener('click', function(e) {
-        if (e.target.classList.contains('remove-part')) {
-            if (container.children.length > 1) {
-                e.target.closest('.part-entry').remove();
-            }
+    // Cuando se ingresa un código manualmente, limpiar la selección
+    rovCodeInput.addEventListener('input', function() {
+        rovSelect.value = '';
+    });
+
+    // Función para calcular el costo total
+    function updateCost(row) {
+        const select = row.querySelector('.part-select');
+        const quantity = row.querySelector('.quantity-input');
+        const costDisplay = row.querySelector('.cost-display');
+        
+        if (select.value && quantity.value) {
+            const option = select.options[select.selectedIndex];
+            const unitCost = parseFloat(option.dataset.cost);
+            const total = unitCost * parseInt(quantity.value);
+            costDisplay.value = total.toFixed(2);
+        } else {
+            costDisplay.value = '';
         }
+    }
+
+    // Agregar nuevo repuesto
+    addButton.addEventListener('click', function() {
+        const template = container.querySelector('.part-entry').cloneNode(true);
+        template.querySelector('.part-select').value = '';
+        template.querySelector('.quantity-input').value = '';
+        template.querySelector('.cost-display').value = '';
+        
+        template.querySelector('.remove-part').addEventListener('click', function() {
+            template.remove();
+        });
+        
+        template.querySelector('.part-select').addEventListener('change', function() {
+            updateCost(template);
+        });
+        
+        template.querySelector('.quantity-input').addEventListener('input', function() {
+            updateCost(template);
+        });
+        
+        container.appendChild(template);
+    });
+
+    // Configurar eventos para la primera fila
+    const firstRow = container.querySelector('.part-entry');
+    firstRow.querySelector('.remove-part').addEventListener('click', function() {
+        if (container.querySelectorAll('.part-entry').length > 1) {
+            firstRow.remove();
+        }
+    });
+    
+    firstRow.querySelector('.part-select').addEventListener('change', function() {
+        updateCost(firstRow);
+    });
+    
+    firstRow.querySelector('.quantity-input').addEventListener('input', function() {
+        updateCost(firstRow);
     });
 });
 </script>

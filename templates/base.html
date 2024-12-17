@@ -20,15 +20,28 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('repairs.repairs_list') }}">Reparaciones</a>
                     </li>
-                    {% if current_user.role == 'supervisor' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('parts.list_parts') }}">Repuestos</a>
+                    </li>
+                    {% if current_user.is_supervisor() %}
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('repairs.reports') }}">Informes</a>
+                    </li>
+                    {% endif %}
+                    {% if current_user.is_admin() %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ url_for('admin.users_list') }}">Gestión de Usuarios</a>
                     </li>
                     {% endif %}
                 </ul>
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item">
-                        <span class="nav-link">{{ current_user.username }}</span>
+                        <span class="nav-link">
+                            {{ current_user.username }}
+                            <span class="badge {% if current_user.role == 'admin' %}bg-danger{% elif current_user.role == 'supervisor' %}bg-warning{% else %}bg-info{% endif %}">
+                                {{ current_user.role }}
+                            </span>
+                        </span>
                     </li>
                     <li class="nav-item">
                         <a class="nav-link" href="{{ url_for('auth.logout') }}">Cerrar Sesión</a>

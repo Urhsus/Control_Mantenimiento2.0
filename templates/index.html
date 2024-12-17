@@ -1,53 +1,84 @@
 {% extends "base.html" %}
 
 {% block content %}
-<div class="row">
-    <div class="col-md-12 mb-4">
-        <div class="card">
-            <div class="card-body">
-                <h2 class="card-title">Bienvenido al Sistema de Control de Mantenimiento ROV</h2>
-                <p class="card-text">
-                    Este sistema te permite gestionar y dar seguimiento a las reparaciones de equipos ROV.
-                    Selecciona una opción del menú para comenzar.
-                </p>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h4>Acciones Rápidas</h4>
-            </div>
-            <div class="card-body">
-                <div class="d-grid gap-3">
-                    <a href="{{ url_for('repairs.new_repair') }}" class="btn btn-primary">
-                        <i class="fas fa-plus"></i> Nueva Reparación
-                    </a>
-                    <a href="{{ url_for('repairs.repairs_list') }}" class="btn btn-info">
-                        <i class="fas fa-list"></i> Ver Reparaciones
-                    </a>
-                    {% if current_user.role == 'supervisor' %}
-                    <a href="{{ url_for('repairs.reports') }}" class="btn btn-success">
-                        <i class="fas fa-chart-bar"></i> Ver Informes
-                    </a>
-                    {% endif %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <h2 class="card-title">Bienvenido al Sistema de Control de Mantenimiento ROV</h2>
+                    <p class="card-text">
+                        Este sistema te permite gestionar y dar seguimiento a las reparaciones de equipos ROV.
+                        {% if current_user.is_admin() %}
+                        Como administrador, tienes acceso completo al sistema, incluyendo la gestión de usuarios.
+                        {% elif current_user.is_supervisor() %}
+                        Como supervisor, puedes revisar y editar las reparaciones, así como ver los informes.
+                        {% else %}
+                        Como técnico, puedes registrar y dar seguimiento a las reparaciones asignadas.
+                        {% endif %}
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 
-    <div class="col-md-6 mb-4">
-        <div class="card">
-            <div class="card-header">
-                <h4>Información del Usuario</h4>
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Acciones Rápidas</h4>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <a href="{{ url_for('repairs.new_repair') }}" class="btn btn-primary w-100">
+                                <i class="fas fa-plus-circle"></i> Nueva Reparación
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a href="{{ url_for('repairs.repairs_list') }}" class="btn btn-info w-100">
+                                <i class="fas fa-list"></i> Ver Reparaciones
+                            </a>
+                        </div>
+                        {% if current_user.is_supervisor() %}
+                        <div class="col-md-6">
+                            <a href="{{ url_for('repairs.reports') }}" class="btn btn-success w-100">
+                                <i class="fas fa-chart-bar"></i> Ver Informes
+                            </a>
+                        </div>
+                        {% endif %}
+                        {% if current_user.is_admin() %}
+                        <div class="col-md-6">
+                            <a href="{{ url_for('admin.users_list') }}" class="btn btn-danger w-100">
+                                <i class="fas fa-users-cog"></i> Gestionar Usuarios
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
-            <div class="card-body">
-                <p><strong>Usuario:</strong> {{ current_user.username }}</p>
-                <p><strong>Rol:</strong> {{ current_user.role|title }}</p>
-                <p><strong>Email:</strong> {{ current_user.email }}</p>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h4>Información del Usuario</h4>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h5 class="mb-1">{{ current_user.username }}</h5>
+                        <span class="badge {% if current_user.role == 'admin' %}bg-danger{% elif current_user.role == 'supervisor' %}bg-warning{% else %}bg-info{% endif %}">
+                            {{ current_user.role|title }}
+                        </span>
+                    </div>
+                    <p class="mb-2"><i class="fas fa-envelope"></i> {{ current_user.email }}</p>
+                    <p class="mb-0"><i class="fas fa-clock"></i> Último acceso: {{ current_user.created_at.strftime('%d/%m/%Y %H:%M') }}</p>
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Agregar Font Awesome para los iconos -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
 {% endblock %}
