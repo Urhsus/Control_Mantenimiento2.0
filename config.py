@@ -7,9 +7,10 @@ load_dotenv()
 class Config:
     SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev'
     
-    # URI para MySQL
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or \
-        f'mysql://{os.environ.get("MYSQL_USER", "root")}:{os.environ.get("MYSQL_PASSWORD", "")}@{os.environ.get("MYSQL_HOST", "localhost")}/{os.environ.get("MYSQL_DB", "mantenimiento")}'
+    # URI para PostgreSQL
+    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL', 'sqlite:///control_mantenimiento.db')
+    
+    # Asegurarse de que la URL de PostgreSQL tenga el prefijo correcto
     if SQLALCHEMY_DATABASE_URI.startswith("postgres://"):
         SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace("postgres://", "postgresql://", 1)
     

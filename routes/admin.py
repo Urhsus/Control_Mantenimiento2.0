@@ -27,30 +27,45 @@ def users_list():
 @admin_required
 def new_user():
     if request.method == 'POST':
-        username = request.form.get('username')
-        email = request.form.get('email')
-        password = request.form.get('password')
-        role = request.form.get('role')
+        try:
+            username = request.form.get('username')
+            email = request.form.get('email')
+            password = request.form.get('password')
+            role = request.form.get('role')
 
-        if User.query.filter_by(username=username).first():
-            flash('El nombre de usuario ya existe', 'danger')
+            if not username or not email or not password or not role:
+                flash('Todos los campos son requeridos', 'danger')
+                return redirect(url_for('admin.new_user'))
+
+            if User.query.filter_by(username=username).first():
+                flash('El nombre de usuario ya existe', 'danger')
+                return redirect(url_for('admin.new_user'))
+
+            if User.query.filter_by(email=email).first():
+                flash('El email ya está registrado', 'danger')
+                return redirect(url_for('admin.new_user'))
+
+            if role not in ['tecnico', 'supervisor', 'admin']:
+                flash('Rol inválido', 'danger')
+                return redirect(url_for('admin.new_user'))
+
+            user = User(
+                username=username,
+                email=email,
+                role=role,
+                is_active=True
+            )
+            user.set_password(password)
+            
+            db.session.add(user)
+            db.session.commit()
+
+            flash(f'Usuario {username} creado exitosamente', 'success')
+            return redirect(url_for('admin.users_list'))
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Error al crear usuario: {str(e)}', 'danger')
             return redirect(url_for('admin.new_user'))
-
-        if User.query.filter_by(email=email).first():
-            flash('El email ya está registrado', 'danger')
-            return redirect(url_for('admin.new_user'))
-
-        user = User(
-            username=username,
-            email=email,
-            password_hash=generate_password_hash(password),
-            role=role
-        )
-        db.session.add(user)
-        db.session.commit()
-
-        flash(f'Usuario {username} creado exitosamente', 'success')
-        return redirect(url_for('admin.users_list'))
 
     return render_template('admin/new_user.html')
 

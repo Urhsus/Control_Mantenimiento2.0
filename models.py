@@ -37,6 +37,9 @@ class User(UserMixin, db.Model):
     def active(self, value):
         self.is_active = value
 
+    def __repr__(self):
+        return f'<User {self.username}>'
+
 class Part(db.Model):
     __tablename__ = 'parts'
     id = db.Column(db.Integer, primary_key=True)
