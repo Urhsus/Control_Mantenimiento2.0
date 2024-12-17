@@ -114,7 +114,7 @@ class Repair(TimestampMixin, db.Model):
     def __repr__(self):
         return f'<Repair {self.id} - ROV {self.rov_code}>'
 
-class RepairPart(TimestampMixin, db.Model):
+class RepairPart(db.Model):
     __tablename__ = 'repair_parts'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -122,6 +122,8 @@ class RepairPart(TimestampMixin, db.Model):
     part_id = db.Column(db.Integer, db.ForeignKey('parts.id', ondelete='CASCADE'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     unit_cost_at_time = db.Column(db.Float, nullable=False)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
     
     __table_args__ = (
         db.Index('idx_repair_part', 'repair_id', 'part_id'),
