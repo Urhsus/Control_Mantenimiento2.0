@@ -122,7 +122,7 @@ class RepairPart(TimestampMixin, db.Model):
     part_id = db.Column(db.Integer, db.ForeignKey('parts.id', ondelete='CASCADE'), nullable=False)
     quantity = db.Column(db.Integer, nullable=False)
     unit_cost_at_time = db.Column(db.Float, nullable=False)
-
+    
     __table_args__ = (
         db.Index('idx_repair_part', 'repair_id', 'part_id'),
     )
@@ -130,7 +130,7 @@ class RepairPart(TimestampMixin, db.Model):
     @validates('quantity')
     def validate_quantity(self, key, quantity):
         if quantity <= 0:
-            raise ValueError('La cantidad debe ser mayor que cero')
+            raise ValueError('La cantidad debe ser mayor que 0')
         return quantity
 
     @validates('unit_cost_at_time')
@@ -140,4 +140,4 @@ class RepairPart(TimestampMixin, db.Model):
         return cost
 
     def __repr__(self):
-        return f'<RepairPart {self.repair_id}-{self.part_id}>'
+        return f'<RepairPart {self.repair_id}:{self.part_id}>'

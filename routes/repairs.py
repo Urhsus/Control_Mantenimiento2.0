@@ -37,12 +37,15 @@ def new_repair():
         
         for part_id, quantity in zip(parts, quantities):
             if part_id and quantity and int(quantity) > 0:
-                repair_part = RepairPart(
-                    repair_id=repair.id,
-                    part_id=int(part_id),
-                    quantity=int(quantity)
-                )
-                db.session.add(repair_part)
+                part = Part.query.get(int(part_id))
+                if part:
+                    repair_part = RepairPart(
+                        repair_id=repair.id,
+                        part_id=part.id,
+                        quantity=int(quantity),
+                        unit_cost_at_time=part.unit_cost
+                    )
+                    db.session.add(repair_part)
         
         db.session.commit()
         flash('Reparación creada exitosamente', 'success')

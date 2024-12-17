@@ -10,6 +10,7 @@ from config import Config
 import os
 import logging
 from datetime import datetime
+from flask_migrate import Migrate
 
 def create_app(config_class=Config):
     app = Flask(__name__)
@@ -29,6 +30,7 @@ def create_app(config_class=Config):
     
     # Inicializar extensiones
     db.init_app(app)
+    migrate = Migrate(app, db)
     login_manager.init_app(app)
 
     @login_manager.user_loader
