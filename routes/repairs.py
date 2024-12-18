@@ -38,6 +38,13 @@ def new_repair():
     
     if request.method == 'POST':
         try:
+            # Validar datos requeridos
+            required_fields = ['rov_code', 'pilot_name', 'repair_type', 'reported_failure', 'controller_code']
+            for field in required_fields:
+                if not request.form.get(field):
+                    flash(f'El campo {field.replace("_", " ").title()} es requerido', 'error')
+                    return render_template('repairs/new.html', parts=parts), 400
+
             repair = Repair(
                 rov_code=request.form['rov_code'],
                 pilot_name=request.form['pilot_name'],
@@ -73,10 +80,14 @@ def new_repair():
             db.session.commit()
             flash('Reparación creada exitosamente', 'success')
             return redirect(url_for('repairs.repairs_list'))
+        except ValueError as e:
+            db.session.rollback()
+            flash(f'Error de validación: {str(e)}', 'error')
+            return render_template('repairs/new.html', parts=parts), 400
         except Exception as e:
             db.session.rollback()
-            flash(f'Error al crear la reparación: {str(e)}', 'error')
-            return render_template('repairs/new.html', parts=parts), 400
+            flash('Hubo un error al crear la reparación. Por favor, verifica los datos e intenta nuevamente.', 'error')
+            return render_template('repairs/new.html', parts=parts), 500
     
     # GET request
     return render_template('repairs/new.html', parts=parts)
