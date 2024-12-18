@@ -180,23 +180,29 @@ def repair_detail(repair_id):
 @repairs_bp.route('/reports')
 @login_required
 def reports():
-    # Obtener estadísticas básicas
-    total_repairs = Repair.query.count()
-    pending_repairs = Repair.query.filter_by(status='pendiente').count()
-    completed_repairs = Repair.query.filter_by(status='completada').count()
-    
-    # Obtener las reparaciones más recientes
-    recent_repairs = Repair.query.order_by(Repair.start_date.desc()).limit(5).all()
-    
-    # Calcular el costo total de todas las reparaciones
-    total_cost = 0
-    for repair in Repair.query.all():
-        for repair_part in repair.parts:
-            total_cost += repair_part.unit_cost_at_time * repair_part.quantity
-    
-    return render_template('repairs/reports.html',
-                         total_repairs=total_repairs,
-                         pending_repairs=pending_repairs,
-                         completed_repairs=completed_repairs,
-                         recent_repairs=recent_repairs,
-                         total_cost=total_cost)
+    try:
+        # Obtener estadísticas básicas
+        total_repairs = Repair.query.count()
+        pending_repairs = Repair.query.filter_by(status='pendiente').count()
+        completed_repairs = Repair.query.filter_by(status='completada').count()
+        in_progress_repairs = Repair.query.filter_by(status='en_proceso').count()
+        
+        # Obtener las reparaciones más recientes
+        recent_repairs = Repair.query.order_by(Repair.start_date.desc()).limit(5).all()
+        
+        # Obtener estadísticas por tipo
+        preventive_repairs = Repair.query.filter_by(repair_type='preventiva').count()
+        corrective_repairs = Repair.query.filter_by(repair_type='correctiva').count()
+        
+        return render_template('repairs/reports.html',
+                             total_repairs=total_repairs,
+                             pending_repairs=pending_repairs,
+                             completed_repairs=completed_repairs,
+                             in_progress_repairs=in_progress_repairs,
+                             recent_repairs=recent_repairs,
+                             preventive_repairs=preventive_repairs,
+                             corrective_repairs=corrective_repairs)
+    except Exception as e:
+        app.logger.error(f'Error en la página de reportes: {str(e)}')
+        flash('Hubo un error al cargar los reportes. Por favor, intenta nuevamente.', 'error')
+        return redirect(url_for('repairs.repairs_list'))

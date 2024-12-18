@@ -9,28 +9,47 @@
         </a>
     </div>
 
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
     <div class="row">
         <!-- Tarjetas de estadísticas -->
-        <div class="col-md-4 mb-4">
-            <div class="card">
+        <div class="col-md-3 mb-4">
+            <div class="card bg-primary text-white">
                 <div class="card-body">
                     <h5 class="card-title">Total de Reparaciones</h5>
                     <p class="card-text display-4">{{ total_repairs }}</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-4">
-            <div class="card">
+        <div class="col-md-3 mb-4">
+            <div class="card bg-warning text-dark">
                 <div class="card-body">
                     <h5 class="card-title">Reparaciones Pendientes</h5>
                     <p class="card-text display-4">{{ pending_repairs }}</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-4 mb-4">
-            <div class="card">
+        <div class="col-md-3 mb-4">
+            <div class="card bg-info text-white">
                 <div class="card-body">
-                    <h5 class="card-title">Reparaciones Completadas</h5>
+                    <h5 class="card-title">En Proceso</h5>
+                    <p class="card-text display-4">{{ in_progress_repairs }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3 mb-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Completadas</h5>
                     <p class="card-text display-4">{{ completed_repairs }}</p>
                 </div>
             </div>
@@ -40,25 +59,39 @@
     <div class="row mt-4">
         <div class="col-md-6 mb-4">
             <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Por Tipo de Reparación</h5>
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">Costo Total de Reparaciones</h5>
-                    <p class="card-text display-4">${{ "{:,.2f}".format(total_cost) }}</p>
+                    <div class="row">
+                        <div class="col-6">
+                            <h6>Preventivas</h6>
+                            <p class="display-6">{{ preventive_repairs }}</p>
+                        </div>
+                        <div class="col-6">
+                            <h6>Correctivas</h6>
+                            <p class="display-6">{{ corrective_repairs }}</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
         <div class="col-md-6 mb-4">
             <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Reparaciones Recientes</h5>
+                </div>
                 <div class="card-body">
-                    <h5 class="card-title">Últimas Reparaciones</h5>
                     <div class="list-group">
                         {% for repair in recent_repairs %}
-                        <a href="{{ url_for('repairs.repair_detail', repair_id=repair.id) }}" class="list-group-item list-group-item-action">
+                        <a href="{{ url_for('repairs.repair_detail', repair_id=repair.id) }}" 
+                           class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
-                                <h6 class="mb-1">ROV: {{ repair.rov.code }}</h6>
+                                <h6 class="mb-1">ROV: {{ repair.rov_code }}</h6>
                                 <small>{{ repair.start_date.strftime('%d/%m/%Y') }}</small>
                             </div>
-                            <p class="mb-1">{{ repair.reported_failure }}</p>
-                            <small class="text-muted">Estado: {{ repair.status }}</small>
+                            <p class="mb-1">{{ repair.repair_type|title }} - {{ repair.status|title }}</p>
+                            <small>Técnico: {{ repair.technician.username }}</small>
                         </a>
                         {% endfor %}
                     </div>
@@ -67,7 +100,4 @@
         </div>
     </div>
 </div>
-
-<!-- Agregar Font Awesome para los iconos -->
-<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 {% endblock %}
