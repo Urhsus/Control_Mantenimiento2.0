@@ -89,6 +89,8 @@ class Repair(TimestampMixin, db.Model):
     rov_code = db.Column(db.String(20), nullable=False, index=True)
     controller_code = db.Column(db.String(20), nullable=False)
     pilot_name = db.Column(db.String(100), nullable=False)
+    team = db.Column(db.String(50), nullable=True)
+    centro_cultivo = db.Column(db.String(100), nullable=True)
     repair_type = db.Column(db.String(20), nullable=False)
     reported_failure = db.Column(db.Text, nullable=False)
     observations = db.Column(db.Text)

@@ -28,8 +28,8 @@ def new_repair():
                 reported_failure=request.form['reported_failure'],
                 observations=request.form.get('observations', ''),
                 controller_code=request.form['controller_code'],
-                team=request.form['team'],
-                centro_cultivo=request.form['centro_cultivo'],
+                team=request.form.get('team', ''),
+                centro_cultivo=request.form.get('centro_cultivo', ''),
                 technician_id=current_user.id,
                 status='pendiente',
                 start_date=datetime.now()
