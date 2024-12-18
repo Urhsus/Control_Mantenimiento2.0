@@ -16,6 +16,9 @@ def repairs_list():
 @repairs_bp.route('/new', methods=['GET', 'POST'])
 @login_required
 def new_repair():
+    # Obtener la lista de partes al inicio de la función
+    parts = Part.query.all()
+    
     if request.method == 'POST':
         try:
             repair = Repair(
@@ -25,6 +28,8 @@ def new_repair():
                 reported_failure=request.form['reported_failure'],
                 observations=request.form.get('observations', ''),
                 controller_code=request.form['controller_code'],
+                team=request.form['team'],
+                centro_cultivo=request.form['centro_cultivo'],
                 technician_id=current_user.id,
                 status='pendiente',
                 start_date=datetime.now()
@@ -33,10 +38,10 @@ def new_repair():
             db.session.commit()
 
             # Procesar los repuestos seleccionados
-            parts = request.form.getlist('parts[]')
+            parts_list = request.form.getlist('parts[]')
             quantities = request.form.getlist('quantities[]')
             
-            for part_id, quantity in zip(parts, quantities):
+            for part_id, quantity in zip(parts_list, quantities):
                 if part_id and quantity and int(quantity) > 0:
                     part = Part.query.get(int(part_id))
                     if part:
@@ -54,11 +59,9 @@ def new_repair():
         except Exception as e:
             db.session.rollback()
             flash(f'Error al crear la reparación: {str(e)}', 'error')
-            parts = Part.query.all()
             return render_template('repairs/new.html', parts=parts), 400
     
     # GET request
-    parts = Part.query.all()
     return render_template('repairs/new.html', parts=parts)
 
 @repairs_bp.route('/<int:id>/edit', methods=['GET', 'POST'])

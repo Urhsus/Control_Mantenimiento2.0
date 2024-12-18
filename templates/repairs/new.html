@@ -22,6 +22,14 @@
                         <input type="text" class="form-control" id="pilot_name" name="pilot_name" required>
                     </div>
                     <div class="mb-3">
+                        <label for="team" class="form-label">Team</label>
+                        <input type="text" class="form-control" id="team" name="team" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="centro_cultivo" class="form-label">Centro de Cultivo</label>
+                        <input type="text" class="form-control" id="centro_cultivo" name="centro_cultivo" required>
+                    </div>
+                    <div class="mb-3">
                         <label for="repair_type" class="form-label">Tipo de Reparación</label>
                         <select class="form-select" id="repair_type" name="repair_type" required>
                             <option value="preventiva">Preventiva</option>
@@ -48,19 +56,16 @@
                 <div class="card-body">
                     <div id="parts-container">
                         <div class="part-entry row mb-3">
-                            <div class="col-md-6">
+                            <div class="col-md-8">
                                 <select class="form-select part-select" name="parts[]">
                                     <option value="">Seleccionar repuesto...</option>
                                     {% for part in parts %}
-                                    <option value="{{ part.id }}" data-cost="{{ part.unit_cost }}">{{ part.code }} - {{ part.name }}</option>
+                                    <option value="{{ part.id }}">{{ part.code }} - {{ part.name }}</option>
                                     {% endfor %}
                                 </select>
                             </div>
                             <div class="col-md-3">
                                 <input type="number" class="form-control quantity-input" name="quantities[]" value="1" min="1">
-                            </div>
-                            <div class="col-md-2">
-                                <span class="cost-display"></span>
                             </div>
                             <div class="col-md-1">
                                 <button type="button" class="btn btn-danger btn-sm remove-part">
@@ -72,9 +77,6 @@
                     <button type="button" class="btn btn-secondary" id="add-part">
                         <i class="fas fa-plus"></i> Agregar Repuesto
                     </button>
-                    <div class="mt-3">
-                        <strong>Costo Total: $<span id="total-cost">0.00</span></strong>
-                    </div>
                 </div>
             </div>
 
@@ -90,66 +92,29 @@
 document.addEventListener('DOMContentLoaded', function() {
     const container = document.getElementById('parts-container');
     const addButton = document.getElementById('add-part');
-    const totalCostDisplay = document.getElementById('total-cost');
 
-    function updateCost(row) {
-        const select = row.querySelector('.part-select');
-        const quantity = parseInt(row.querySelector('.quantity-input').value) || 0;
-        const costDisplay = row.querySelector('.cost-display');
+    function createNewRow() {
+        const template = container.querySelector('.part-entry').cloneNode(true);
+        template.querySelector('.part-select').value = '';
+        template.querySelector('.quantity-input').value = '1';
         
-        if (select.value) {
-            const option = select.options[select.selectedIndex];
-            const unitCost = parseFloat(option.dataset.cost);
-            const total = unitCost * quantity;
-            costDisplay.textContent = `$${total.toFixed(2)}`;
-        } else {
-            costDisplay.textContent = '';
-        }
-        
-        updateTotalCost();
-    }
-
-    function updateTotalCost() {
-        let total = 0;
-        document.querySelectorAll('.part-entry').forEach(row => {
-            const select = row.querySelector('.part-select');
-            if (select.value) {
-                const option = select.options[select.selectedIndex];
-                const unitCost = parseFloat(option.dataset.cost);
-                const quantity = parseInt(row.querySelector('.quantity-input').value) || 0;
-                total += unitCost * quantity;
-            }
+        template.querySelector('.remove-part').addEventListener('click', () => {
+            template.remove();
         });
-        totalCostDisplay.textContent = total.toFixed(2);
+        
+        container.appendChild(template);
     }
 
     // Configurar eventos para la primera fila
     const firstRow = container.querySelector('.part-entry');
-    firstRow.querySelector('.part-select').addEventListener('change', () => updateCost(firstRow));
-    firstRow.querySelector('.quantity-input').addEventListener('input', () => updateCost(firstRow));
+    
     firstRow.querySelector('.remove-part').addEventListener('click', () => {
         if (container.querySelectorAll('.part-entry').length > 1) {
             firstRow.remove();
-            updateTotalCost();
         }
     });
 
-    // Agregar nuevo repuesto
-    addButton.addEventListener('click', function() {
-        const template = container.querySelector('.part-entry').cloneNode(true);
-        template.querySelector('.part-select').value = '';
-        template.querySelector('.quantity-input').value = '1';
-        template.querySelector('.cost-display').textContent = '';
-        
-        template.querySelector('.part-select').addEventListener('change', () => updateCost(template));
-        template.querySelector('.quantity-input').addEventListener('input', () => updateCost(template));
-        template.querySelector('.remove-part').addEventListener('click', () => {
-            template.remove();
-            updateTotalCost();
-        });
-        
-        container.appendChild(template);
-    });
+    addButton.addEventListener('click', createNewRow);
 });
 </script>
 {% endblock %}
