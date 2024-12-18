@@ -10,7 +10,24 @@ repairs_bp = Blueprint('repairs', __name__, url_prefix='/repairs')
 @repairs_bp.route('/')
 @login_required
 def repairs_list():
-    repairs = Repair.query.all()
+    # Obtener los filtros de la URL
+    date_filter = request.args.get('date')
+    type_filter = request.args.get('type')
+    
+    # Iniciar la consulta base
+    query = Repair.query
+    
+    # Aplicar filtros si están presentes
+    if date_filter:
+        date_obj = datetime.strptime(date_filter, '%Y-%m-%d')
+        query = query.filter(db.func.date(Repair.start_date) == date_obj.date())
+    
+    if type_filter:
+        query = query.filter(Repair.repair_type == type_filter)
+    
+    # Obtener las reparaciones
+    repairs = query.order_by(Repair.start_date.desc()).all()
+    
     return render_template('repairs/list.html', repairs=repairs)
 
 @repairs_bp.route('/new', methods=['GET', 'POST'])

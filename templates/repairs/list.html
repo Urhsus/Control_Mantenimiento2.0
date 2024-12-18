@@ -41,13 +41,13 @@
                 <tbody>
                     {% for repair in repairs %}
                     <tr>
-                        <td>{{ repair.rov.code }}</td>
+                        <td>{{ repair.rov_code }}</td>
                         <td>{{ repair.repair_type|title }}</td>
                         <td>{{ repair.pilot_name }}</td>
                         <td>{{ repair.start_date.strftime('%d/%m/%Y %H:%M') }}</td>
                         <td>
                             <span class="badge {% if repair.status == 'en_proceso' %}bg-warning
-                                           {% elif repair.status == 'completado' %}bg-success
+                                           {% elif repair.status == 'completada' %}bg-success
                                            {% else %}bg-secondary{% endif %}">
                                 {{ repair.status|title }}
                             </span>
